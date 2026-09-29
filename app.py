@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory
 from openpyxl import load_workbook
 import os
 import shutil
@@ -6,30 +6,35 @@ import shutil
 app = Flask(__name__)
 
 
+# Home page
 @app.route("/")
 def home():
     return render_template("form.html")
 
 
+# TA Form Submit
 @app.route("/submit", methods=["POST"])
 def submit():
 
-    # Form se data lena
+    # Form se employee data lena
     employee_code = request.form.get("employee_code")
     name = request.form.get("name")
     position = request.form.get("position")
     job = request.form.get("job")
     grade = request.form.get("grade")
 
+    # Advance amount
     advance = request.form.get("advance")
     advance = float(advance) if advance else 0
 
+    # Travel details
     travel_date = request.form.get("travel_date")
     location_from = request.form.get("location_from")
     location_to = request.form.get("location_to")
     from_time = request.form.get("from_time")
     to_time = request.form.get("to_time")
-        # Expense details receive karna
+
+    # Expense details
     expense_dates = request.form.getlist("expense_date[]")
     particulars = request.form.getlist("particulars[]")
     modes = request.form.getlist("mode[]")
@@ -38,7 +43,7 @@ def submit():
     trs_policies = request.form.getlist("trs_policy[]")
     remarks = request.form.getlist("remarks[]")
 
-    # Template file
+    # Original Excel template
     template_file = "TA_Template.xlsx"
 
     # Generated folder banana
@@ -51,14 +56,13 @@ def submit():
     # Original template ki copy banana
     shutil.copy(template_file, output_file)
 
-    # Copy ko open karna
+    # Excel file open karna
     workbook = load_workbook(output_file)
     sheet = workbook.active
 
-    # TA format ke cells me data bharna
+    # Employee details Excel me bharna
     sheet["B4"] = employee_code
     sheet["D4"] = travel_date
-
     sheet["G4"] = ""
 
     sheet["B5"] = name
@@ -72,9 +76,9 @@ def submit():
     sheet["B7"] = job
     sheet["D7"] = grade
 
-        # Expense table Excel me fill karna
-
-    start_row = 9
+    # Expense table
+    # Excel me first expense row 11 hai
+    start_row = 11
 
     for i in range(len(expense_dates)):
 
@@ -84,30 +88,87 @@ def submit():
         sheet[f"B{row}"] = particulars[i]
         sheet[f"C{row}"] = modes[i]
         sheet[f"D{row}"] = supporting[i]
-        sheet[f"E{row}"] = float(actual_amounts[i]) if actual_amounts[i] else 0
-        sheet[f"F{row}"] = float(trs_policies[i]) if trs_policies[i] else 0
+
+        sheet[f"E{row}"] = (
+            float(actual_amounts[i])
+            if actual_amounts[i]
+            else 0
+        )
+
+        sheet[f"F{row}"] = (
+            float(trs_policies[i])
+            if trs_policies[i]
+            else 0
+        )
+
         sheet[f"G{row}"] = remarks[i]
 
-        sheet["E23"] = "=SUM(E9:E22)"
-        sheet["B25"] = advance
-        sheet["B26"] = "=E23-B25"
-        # Excel save karna
+    # Total Actual Expense
+    sheet["E23"] = "=SUM(E11:E22)"
+
+    # Advance
+    sheet["B25"] = advance
+
+    # Balance
+    sheet["B26"] = "=E23-B25"
+
+    # Excel save karna
     workbook.save(output_file)
 
+    # Sirf filename nikalna
+    filename = os.path.basename(output_file)
+
+    # Success page + Download button
     return f"""
-    <h1>TA Form Submitted Successfully!</h1>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>TA Submitted</title>
+    </head>
 
-    <p>Employee Code: {employee_code}</p>
-    <p>Name: {name}</p>
-    <p>Job: {job}</p>
-    <p>From: {location_from}</p>
-    <p>To: {location_to}</p>
+    <body>
 
-    <p><b>TA Excel file has been created successfully.</b></p>
+        <h1>TA Form Submitted Successfully!</h1>
 
-    <p>File: {output_file}</p>
+        <p><b>Employee Code:</b> {employee_code}</p>
+        <p><b>Name:</b> {name}</p>
+        <p><b>Job:</b> {job}</p>
+        <p><b>From:</b> {location_from}</p>
+        <p><b>To:</b> {location_to}</p>
+
+        <br>
+
+        <p>
+            <b>TA Excel file has been created successfully.</b>
+        </p>
+
+        <br>
+
+        <a href="/download/{filename}">
+            <button>
+                Download TA Excel
+            </button>
+        </a>
+
+    </body>
+    </html>
     """
 
 
+# Excel Download Route
+@app.route("/download/<filename>")
+def download_file(filename):
+
+    return send_from_directory(
+        "generated",
+        filename,
+        as_attachment=True
+    )
+
+
+# Flask server
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(
+        host="0.0.0.0",
+        port=5000
+    )

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <!-- # Page ki basic settings -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- # Browser tab me ye naam dikhega -->
+    <title>Travel Claim Form</title>
+
+</head>
+
+<body>
+
+    <!-- # Form ka main heading -->
+    <h1>TRAVEL CLAIM FORM</h1>
+
+
+    <!-- ========================================================= -->
+    <!-- # MAIN FORM START -->
+    <!-- # Is form ka data Python ke /submit route par jayega -->
+    <!-- ========================================================= -->
+
+    <form method="POST" action="/submit">
+
+
+        <!-- ========================================================= -->
+        <!-- # EMPLOYEE DETAILS -->
+        <!-- # Ye sab fields REQUIRED hain -->
+        <!-- ========================================================= -->
+
+        <h2>Employee Details</h2>
+
+        <label>Employee Code:</label>
+        <input type="text" name="employee_code" required>
+        <br><br>
+
+        <label>Name:</label>
+        <input type="text" name="name" required>
+        <br><br>
+
+        <label>Place of Position:</label>
+        <input type="text" name="position" required>
+        <br><br>
+
+        <label>Job:</label>
+        <input type="text" name="job" required>
+        <br><br>
+
+        <label>Grade:</label>
+        <input type="text" name="grade" required>
+        <br><br>
+
+
+        <!-- ========================================================= -->
+        <!-- # TRAVEL DETAILS -->
+        <!-- # Ye fields bhi REQUIRED hain -->
+        <!-- ========================================================= -->
+
+        <h2>Travel Details</h2>
+
+        <label>Date of Travelling:</label>
+        <input type="date" name="travel_date" required>
+        <br><br>
+
+        <label>Location From:</label>
+        <input type="text" name="location_from" required>
+        <br><br>
+
+        <label>Location To:</label>
+        <input type="text" name="location_to" required>
+        <br><br>
+
+        <!-- # From Time required hai -->
+        <label>From Time:</label>
+        <input type="time" name="from_time" required>
+        <br><br>
+
+        <!-- # To Time required hai -->
+        <label>To Time:</label>
+        <input type="time" name="to_time" required>
+        <br><br>
+
+
+        <!-- ========================================================= -->
+        <!-- # EXPENSE DETAILS -->
+        <!-- ========================================================= -->
+
+        <h2>Expense Details</h2>
+
+        <table border="1" id="expenseTable">
+
+            <thead>
+
+                <tr>
+
+                    <th>Date</th>
+                    <th>Particulars</th>
+                    <th>Mode</th>
+                    <th>Supporting Documents</th>
+                    <th>Actual Expense Amount</th>
+                    <th>TRS Policy</th>
+                    <th>Remarks</th>
+                    <th>Action</th>
+
+                </tr>
+
+            </thead>
+
+
+            <!-- ===================================================== -->
+            <!-- # EXPENSE ROWS -->
+            <!-- # Pehli row automatically available rahegi -->
+            <!-- ===================================================== -->
+
+            <tbody id="expenseBody">
+
+                <tr>
+
+                    <!-- # Expense Date - REQUIRED -->
+                    <td>
+                        <input type="date" name="expense_date[]" required>
+                    </td>
+
+
+                    <!-- # Particulars - REQUIRED -->
+                    <td>
+                        <input type="text" name="particulars[]" required>
+                    </td>
+
+
+                    <!-- # Mode - REQUIRED -->
+                    <td>
+                        <input type="text" name="mode[]" required>
+                    </td>
+
+
+                    <!-- # Supporting Documents - REQUIRED -->
+                    <td>
+
+                        <select name="supporting[]" required>
+
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+
+                        </select>
+
+                    </td>
+
+
+                    <!-- # Actual Expense Amount - REQUIRED -->
+                    <td>
+                        <input
+                            type="number"
+                            name="actual_amount[]"
+                            step="0.01"
+                            required
+                        >
+                    </td>
+
+
+                    <!-- # TRS Policy - OPTIONAL -->
+                    <td>
+                        <input
+                            type="number"
+                            name="trs_policy[]"
+                            step="0.01"
+                        >
+                    </td>
+
+
+                    <!-- # Remarks - OPTIONAL -->
+                    <td>
+                        <input
+                            type="text"
+                            name="remarks[]"
+                        >
+                    </td>
+
+
+                    <!-- # First row ko remove karne ka button -->
+                    <td>
+
+                        <button
+                            type="button"
+                            onclick="removeExpense(this)"
+                        >
+                            Remove
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+
+        <br>
+
+
+        <!-- ========================================================= -->
+        <!-- # ADD EXPENSE BUTTON -->
+        <!-- # Isse nayi expense row add hogi -->
+        <!-- ========================================================= -->
+
+        <button
+            type="button"
+            onclick="addExpense()"
+        >
+            + Add Expense
+        </button>
+
+
+        <br><br>
+
+
+        <!-- ========================================================= -->
+        <!-- # ADVANCE AMOUNT -->
+        <!-- # Advance optional hai; default 0 rahega -->
+        <!-- ========================================================= -->
+
+        <label>Advance Amount:</label>
+
+        <input
+            type="number"
+            name="advance"
+            step="0.01"
+            value="0"
+        >
+
+        <br><br>
+
+
+        <!-- ========================================================= -->
+        <!-- # SUBMIT BUTTON -->
+        <!-- ========================================================= -->
+
+        <button type="submit">
+            SUBMIT
+        </button>
+
+
+    </form>
+
+
+    <!-- ============================================================= -->
+    <!-- # JAVASCRIPT START -->
+    <!-- # Ye Add Expense aur Remove Expense ko control karta hai -->
+    <!-- ============================================================= -->
+
+    <script>
+
+
+        // =========================================================
+        // # ADD EXPENSE
+        // # "+ Add Expense" dabane par nayi row banegi
+        // =========================================================
+
+        function addExpense() {
+
+            // # Expense table ka body find karna
+            const tableBody = document.getElementById("expenseBody");
+
+
+            // # Nayi table row create karna
+            const newRow = document.createElement("tr");
+
+
+            // # Nayi row ke andar fields create karna
+            newRow.innerHTML = `
+
+                <!-- # Expense Date - REQUIRED -->
+                <td>
+                    <input
+                        type="date"
+                        name="expense_date[]"
+                        required
+                    >
+                </td>
+
+
+                <!-- # Particulars - REQUIRED -->
+                <td>
+                    <input
+                        type="text"
+                        name="particulars[]"
+                        required
+                    >
+                </td>
+
+
+                <!-- # Mode - REQUIRED -->
+                <td>
+                    <input
+                        type="text"
+                        name="mode[]"
+                        required
+                    >
+                </td>
+
+
+                <!-- # Supporting Documents - REQUIRED -->
+                <td>
+
+                    <select
+                        name="supporting[]"
+                        required
+                    >
+
+                        <option value="">Select</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+
+                    </select>
+
+                </td>
+
+
+                <!-- # Actual Expense Amount - REQUIRED -->
+                <td>
+
+                    <input
+                        type="number"
+                        name="actual_amount[]"
+                        step="0.01"
+                        required
+                    >
+
+                </td>
+
+
+                <!-- # TRS Policy - OPTIONAL -->
+                <td>
+
+                    <input
+                        type="number"
+                        name="trs_policy[]"
+                        step="0.01"
+                    >
+
+                </td>
+
+
+                <!-- # Remarks - OPTIONAL -->
+                <td>
+
+                    <input
+                        type="text"
+                        name="remarks[]"
+                    >
+
+                </td>
+
+
+                <!-- # Remove button -->
+                <td>
+
+                    <button
+                        type="button"
+                        onclick="removeExpense(this)"
+                    >
+                        Remove
+                    </button>
+
+                </td>
+
+            `;
+
+
+            // # Nayi row ko expense table me add karna
+            tableBody.appendChild(newRow);
+
+        }
+
+
+        // =========================================================
+        // # REMOVE EXPENSE
+        // # Remove button dabane par woh row delete hogi
+        // =========================================================
+
+        function removeExpense(button) {
+
+            // # Button ki parent <td>
+            // # uske parent <tr> ko remove karega
+
+            button.parentElement.parentElement.remove();
+
+        }
+
+
+    </script>
+
+
+</body>
+
+</html>
